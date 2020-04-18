@@ -17,6 +17,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
@@ -84,8 +85,8 @@ public class IGNMap extends JComponent implements Printable,
     // | Constantes |
     // +------------+
     // Clé de développement IGN valable jusqu'au ?
-    public static final String cleIGN_default = "ry9bshqmzmv1gao9srw610oq";
-    public static final String key_cleIGN = "key_cle_IGN";
+    public static final String CLE_IGN_DEFAULT = "ry9bshqmzmv1gao9srw610oq";
+    public static final String KEY_CLE_IGN = "key_cle_IGN";
 
     private static final int TILE_PIXEL_DIM = 256; // Dimension d'une tuile
     private static final int DEFAULT_MAP_WIDTH = 3 * TILE_PIXEL_DIM;
@@ -98,18 +99,20 @@ public class IGNMap extends JComponent implements Printable,
     private static final int STROKE_WIDTH = 5;
     private static final BasicStroke stroke
             = new BasicStroke(STROKE_WIDTH, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL);
-    private static final Color transparantBlue = new Color(0f, 0f, 1.0f, 0.8f);
-    private static final Color transparantRed = new Color(1.0f, 0.1f, 0.2f, 0.5f);
-    private static final float ptWidth = 7.5f;
+    private static final Color TRANSPARENT_BLUE = new Color(0f, 0f, 1.0f, 0.8f);
+    private static final Color TRANSPARENT_RED = new Color(1.0f, 0.1f, 0.2f, 0.5f);
+    private static final Color TRANSPARENT_GREEN = new Color(0f, 1.0f, 0f, 0.5f);
+    private static final float PT_WIDTH = 7.5f;
 
     // Échelle de distance
-    private final static Font font = new Font(Font.SANS_SERIF, Font.BOLD, 12);
-    private final static int legendVal = 200;
-    private final static String legend = legendVal + " m";
+    private final static Font FONT = new Font(Font.SANS_SERIF, Font.BOLD, 12);
+    private final static int LEGEND_VAL = 200;
+    private final static String LEGEND = LEGEND_VAL + " m";
 
     // +---------+
     // | Membres |
     // +---------+
+    private boolean dispOneKm;
     private boolean dispOrthoImg; // type de tuiles (aérienne ou non)
     private int ignScale = 15; // Niveau de zoom IGN
     // Indices des tuiles extrêmes de la carte actuelle (visibles ou non)
@@ -189,11 +192,11 @@ public class IGNMap extends JComponent implements Printable,
         // | Barre d'état |
         // +--------------+
         BorderLayout layout = new BorderLayout();
-        setLayout(layout);
+        super.setLayout(layout);
         JPanel panStatus = new JPanel();
         panStatus.setAlignmentX(LEFT_ALIGNMENT);
         panStatus.setLayout(new BorderLayout());
-        add(panStatus, BorderLayout.PAGE_END);
+        super.add(panStatus, BorderLayout.PAGE_END);
 
         // Niveaux de zoom (échelle IGN/zoom dans la carte)
         zoomLbl = new JLabel(ignScale + "/100%");
@@ -419,8 +422,8 @@ public class IGNMap extends JComponent implements Printable,
             } else { // points suivants
                 kmlPath.lineTo(x, y);
             }
-            trackPoints[i] = new Rectangle2D.Float(x - ptWidth / 2,
-                    y - ptWidth / 2, ptWidth, ptWidth);
+            trackPoints[i] = new Rectangle2D.Float(x - PT_WIDTH / 2,
+                    y - PT_WIDTH / 2, PT_WIDTH, PT_WIDTH);
         } // Fin de parcours de la liste
         kmlEnd.setLocation(x, y);
     }
@@ -443,6 +446,19 @@ public class IGNMap extends JComponent implements Printable,
     public void setOrthoMode(boolean ortho) {
         if (this.dispOrthoImg != ortho) { // Changement de mode.
             this.dispOrthoImg = ortho;
+            tileRowMin = 0; // Pour forcer le changement des tuiles
+            identifyAndLoadMapTiles();
+        }
+    }
+
+    /**
+     * Afficher ou non la zone des 1 km
+     *
+     * @param oneKm Afficher ou non la zone
+     */
+    public void setOneKmMode(boolean oneKm) {
+        if (this.dispOneKm != oneKm) { // Changement de mode.
+            this.dispOneKm = oneKm;
             tileRowMin = 0; // Pour forcer le changement des tuiles
             identifyAndLoadMapTiles();
         }
@@ -611,10 +627,10 @@ public class IGNMap extends JComponent implements Printable,
         int h = getHeight();
         x0 = Math.max(w * 0.02, 6);
         y0 = Math.min(h * 0.98, getHeight() - 6 - progress.getHeight());
-        x1 = x0 + legendVal * scale * TILE_PIXEL_DIM / WMTS.getTileDim(ignScale);
+        x1 = x0 + LEGEND_VAL * scale * TILE_PIXEL_DIM / WMTS.getTileDim(ignScale);
         y1 = y0;
-        g2.setFont(font);
-        bounds = g2.getFontMetrics().getStringBounds(legend, g2);
+        g2.setFont(FONT);
+        bounds = g2.getFontMetrics().getStringBounds(LEGEND, g2);
         // Fond semi-transparant
         g2.setPaint(new Color(.9f, .9f, 1, .9f)); // Blanc transparant        
         g2.fill(new RoundRectangle2D.Double(x0 - 5, y0 - bounds.getHeight() - 5,
@@ -628,7 +644,32 @@ public class IGNMap extends JComponent implements Printable,
         g2.draw(new Line2D.Double((x0 + x1) / 2.0, y0, (x0 + x1) / 2.0, y0 - 2));
         g2.draw(new Line2D.Double(x1, y1, x1, y1 - 4));
         // Texte
-        g2.drawString(legend, (float) (x1 + 2), (float) y1);
+        g2.drawString(LEGEND, (float) (x1 + 2), (float) y1);
+
+        
+        // Cercle de 1 km autour de la position de départ
+        if(dispOneKm) {
+            double radiusEquator = TILE_PIXEL_DIM / WMTS.getTileDim(ignScale) * 1000; // 1km
+            double lat, x, y;
+            if (kmlStart!=null) { // Centrer sur la position de départ
+              x = kmlStart.getX();
+              y = kmlStart.getY();
+              lat = kmlList.get(0).latitude;
+            } else { // Centre au milieu de la fenêtre
+              Dimension dim = getSize();
+              x = -mapTranslation.x + dim.width/2;
+              y = -mapTranslation.y + dim.height/2;
+              lat = centerGeoLoc.latitude;
+
+              g.setPaint(Color.magenta);
+              g.fill(new Ellipse2D.Double(x-5,y-5,10,10));
+            }
+            double radius = radiusEquator/Math.cos(Math.toRadians(lat));
+            
+            g.setPaint(TRANSPARENT_GREEN);
+            g.fill(new Ellipse2D.Double(x-radius,y-radius,2*radius,2*radius));
+        }
+            
 
         // +-----------+
         // | Trace KML |
@@ -636,7 +677,7 @@ public class IGNMap extends JComponent implements Printable,
         if (kmlList != null && kmlList.size() > 0) {
             // Définir le pinceau
             g.setStroke(stroke);
-            g.setPaint(transparantBlue);
+            g.setPaint(TRANSPARENT_BLUE);
             // Dessiner la trace
             g.draw(kmlPath);
 
@@ -674,7 +715,7 @@ public class IGNMap extends JComponent implements Printable,
                 // Sous-trace
                 if (sGeoIdx2 != -1 && sGeoIdx2 != sGeoIdx1) {
                     g.setStroke(new BasicStroke(stroke.getLineWidth() * 1.5f));
-                    g.setPaint(transparantRed);
+                    g.setPaint(TRANSPARENT_RED);
                     g.draw(kmlSubpath);
                 }
 
@@ -758,7 +799,7 @@ public class IGNMap extends JComponent implements Printable,
                         contextMenuActivated = false;
                     }
 
-                    int iWidth = (int) (2 * ptWidth);
+                    int iWidth = (int) (2 * PT_WIDTH);
                     repaint(mouseDragStart.x - iWidth, mouseDragStart.y - iWidth,
                             2 * iWidth, 2 * iWidth);
                 }
@@ -776,7 +817,7 @@ public class IGNMap extends JComponent implements Printable,
                         }
                     }
                     selectedPointIdx = -1;
-                    int iWidth = (int) (2 * ptWidth);
+                    int iWidth = (int) (2 * PT_WIDTH);
                     repaint(mouseDragStart.x - iWidth, mouseDragStart.y - iWidth,
                             2 * iWidth, 2 * iWidth);
                 }
@@ -1097,7 +1138,7 @@ public class IGNMap extends JComponent implements Printable,
 
             // Récupérer la clé IGN
             Preferences prefs = Preferences.userNodeForPackage(IGNMap.class);
-            final String cleIGN = prefs.get(IGNMap.key_cleIGN, IGNMap.cleIGN_default);
+            final String cleIGN = prefs.get(IGNMap.KEY_CLE_IGN, IGNMap.CLE_IGN_DEFAULT);
 
             // Supprimer les tuiles inutiles dans la table de hachage
             for (Iterator<String> it = tuiles.keySet().iterator();
@@ -1182,7 +1223,7 @@ public class IGNMap extends JComponent implements Printable,
                                 c = Integer.parseInt(tInfo[3].substring(1));
                             }
 
-                            url = new URL("http://gpp3-wxs.ign.fr/" + cleIGN + "/wmts/?"
+                            url = new URL("https://gpp3-wxs.ign.fr/" + cleIGN + "/wmts/?"
                                     + "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0"
                                     + (ortho ? "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS"
                                             : "&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS")

@@ -29,61 +29,61 @@ import javax.xml.stream.events.XMLEvent;
  * Format du fichier KML:
  * <pre>
  * Document
- * |->name
- * |->description
- * |->Style id="track_n" // trace normale
- * | |-> IconStyle
- * | | |-> Icon
- * | | | |-> href
- * |->Style id="track_h" // trace surlignée
- * | |-> IconStyle
- * | | |-> scale
- * | | |-> Icon
- * | | | |-> href
- * |->StyleMap id="track"
- * | |-> Pair
- * | | |-> key
- * | | |-> styleUrl
- * | |-> Pair
- * | | |-> key
- * | | |-> styleUrl
- * |->Style id="lineStyle"
- * | |-> LineStyle
- * | | |-> color
- * | | |-> width
+ * |--name
+ * |--description
+ * |--Style id="track_n" // trace normale
+ * | |-- IconStyle
+ * | | |-- Icon
+ * | | | |-- href
+ * |--Style id="track_h" // trace surlignée
+ * | |-- IconStyle
+ * | | |-- scale
+ * | | |-- Icon
+ * | | | |-- href
+ * |--StyleMap id="track"
+ * | |-- Pair
+ * | | |-- key
+ * | | |-- styleUrl
+ * | |-- Pair
+ * | | |-- key
+ * | | |-- styleUrl
+ * |--Style id="lineStyle"
+ * | |-- LineStyle
+ * | | |-- color
+ * | | |-- width
  * ///////// Points individuels (1 placemark par point) //////
- * |->Folder
- * | |->name
- * | |->Placemark
- * | | |-> Timestamp
- * | | | |-> when
- * | | |-> StyleUrl
- * | | |-> Point
- * | | | |-> coordinates
- * | | |-> description
- * | |->Placemark
- * | | |-> Timestamp
- * | | | |-> when
- * | | |-> StyleUrl
- * | | |-> Point
- * | | | |-> coordinates
- * | | |-> description
+ * |--Folder
+ * | |--name
+ * | |--Placemark
+ * | | |-- Timestamp
+ * | | | |-- when
+ * | | |-- StyleUrl
+ * | | |-- Point
+ * | | | |-- coordinates
+ * | | |-- description
+ * | |--Placemark
+ * | | |-- Timestamp
+ * | | | |-- when
+ * | | |-- StyleUrl
+ * | | |-- Point
+ * | | | |-- coordinates
+ * | | |-- description
  * . . . . . .
- * | |->Placemark
- * | | |-> Timestamp
- * | | | |-> when
- * | | |-> StyleUrl
- * | | |-> Point
- * | | | |-> coordinates
- * | | |-> description
+ * | |--Placemark
+ * | | |-- Timestamp
+ * | | | |-- when
+ * | | |-- StyleUrl
+ * | | |-- Point
+ * | | | |-- coordinates
+ * | | |-- description
  * /////////// Points de la trace //////////////
- * |-> Placemark
- * | |-> name
- * | |-> styleUrl
- * | |-> LineString
- * | | |-> tessellate
- * | | |-> altitudeMode
- * | | |-> coordinates
+ * |-- Placemark
+ * | |-- name
+ * | |-- styleUrl
+ * | |-- LineString
+ * | | |-- tessellate
+ * | | |-- altitudeMode
+ * | | |-- coordinates
  * </pre>
  */
 public class KMLReader {

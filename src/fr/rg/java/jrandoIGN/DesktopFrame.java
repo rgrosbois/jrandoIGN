@@ -84,23 +84,23 @@ public class DesktopFrame extends JFrame implements ActionListener,
       Locale.getDefault());
 
     // Titre de l'application
-    setTitle(resB.getString("app_name"));
+    super.setTitle(resB.getString("app_name"));
 
     // La fenêtre (sans décoration) occupe 80% de l'écran principal
     Rectangle screenSize = gc.getBounds();
-    setSize(screenSize.width * 8 / 10, screenSize.height * 8 / 10);
+    super.setSize(screenSize.width * 8 / 10, screenSize.height * 8 / 10);
 
     // Respect du mode de placement du gestionnaire de fenêtres natif
-    setLocationByPlatform(true);
+    super.setLocationByPlatform(true);
 
     // Définir le gestionnaire de fenêtres internes
-    setContentPane(new JDesktopPane());
+    super.setContentPane(new JDesktopPane());
 
     // +-------+
     // | Menus |
     // +-------+
     JMenuBar myMenuBar = new JMenuBar();
-    setJMenuBar(myMenuBar);
+    super.setJMenuBar(myMenuBar);
     myMenuBar.add(getTrackMenu(resB)); // Trace
     myMenuBar.add(getWindowMenu(resB)); // Fenêtre
     myMenuBar.add(getConfigMenu(resB)); // Configuration
@@ -604,13 +604,13 @@ public class DesktopFrame extends JFrame implements ActionListener,
   private void setupIGNDevelopmentKey() {
     // Récupérer la clé IGN
     Preferences prefs = Preferences.userNodeForPackage(IGNMap.class);
-    String cleIGN = prefs.get(IGNMap.key_cleIGN, IGNMap.cleIGN_default);
+    String cleIGN = prefs.get(IGNMap.KEY_CLE_IGN, IGNMap.CLE_IGN_DEFAULT);
     String newKey;
     newKey = JOptionPane.
       showInputDialog("Entrer une clef de développement IGN valide", cleIGN);
     if (newKey != null && !"".equals(newKey)) {
       try {
-        prefs.put(IGNMap.key_cleIGN, newKey);
+        prefs.put(IGNMap.KEY_CLE_IGN, newKey);
         prefs.flush();
       } catch (BackingStoreException ex) {
         Logger.getLogger(DesktopFrame.class.getName()).log(Level.SEVERE, null, ex);

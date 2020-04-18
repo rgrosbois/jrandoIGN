@@ -34,9 +34,10 @@ public class IGNFrame extends JInternalFrame implements ActionListener {
   // Version de la classe
   private static final long serialVersionUID = 1L;
   // Clés pour la gestion des menus
-  private final static String actionAddress = "ACTION_ADDRESS",
-    actionOrthoMap = "ACTION_ORTHOMAP",
-    actionPrint = "ACTION_PRINT";
+  private final static String ACTION_ADDRESS = "ACTION_ADDRESS",
+    ACTION_ORTHO_MAP = "ACTION_ORTHOMAP",
+    ACTION_PRINT = "ACTION_PRINT",
+    ACTION_ONE_KM = "ACTION_ONE_KM";
   private IGNMap map = null; // Image de la carte
 
   /**
@@ -50,8 +51,8 @@ public class IGNFrame extends JInternalFrame implements ActionListener {
       true); // iconifiable
 
     // Positionnement de la fenêtre
-    setSize(700, 500);
-    setLocation(30, 30);
+    super.setSize(700, 500);
+    super.setLocation(30, 30);
 
     ResourceBundle resB
       = ResourceBundle.getBundle("i18n/strings", Locale.getDefault());
@@ -68,30 +69,37 @@ public class IGNFrame extends JInternalFrame implements ActionListener {
     mItemPrint.addActionListener(IGNFrame.this);
     mItemPrint.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,
       ActionEvent.ALT_MASK));
-    mItemPrint.setActionCommand(actionPrint);
+    mItemPrint.setActionCommand(ACTION_PRINT);
     menuFichier.add(mItemPrint);
     // Rechercher
     JMenuItem mItmAddress = new JMenuItem(resB.getString("address_menu_itm"));
     mItmAddress.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A,
       ActionEvent.ALT_MASK));
-    mItmAddress.setActionCommand(actionAddress);
+    mItmAddress.setActionCommand(ACTION_ADDRESS);
     mItmAddress.addActionListener(IGNFrame.this);
     menuFichier.add(mItmAddress); // Item rechercher depuis une adresse
 
     myMenuBar.add(menuFichier);
 
-    // Menu Afficher
-    JMenu menuAfficher = new JMenu(resB.getString("display_menu"));
+    // Menu Affichage
+    JMenu menuAffichage = new JMenu(resB.getString("display_menu"));
     JCheckBoxMenuItem mItmAirMap
       = new JCheckBoxMenuItem(resB.getString("satellite_menu_itm"));
     mItmAirMap.addActionListener(IGNFrame.this);
     mItmAirMap.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U,
       ActionEvent.ALT_MASK));
-    mItmAirMap.setActionCommand(actionOrthoMap);
-    menuAfficher.add(mItmAirMap);
-    myMenuBar.add(menuAfficher);
+    mItmAirMap.setActionCommand(ACTION_ORTHO_MAP);
+    menuAffichage.add(mItmAirMap);
+    JCheckBoxMenuItem mItmOneKm
+      = new JCheckBoxMenuItem(resB.getString("oneKm_menu_itm"));
+    mItmOneKm.addActionListener(IGNFrame.this);
+    mItmOneKm.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1,
+      ActionEvent.ALT_MASK));
+    mItmOneKm.setActionCommand(ACTION_ONE_KM);
+    menuAffichage.add(mItmOneKm);
+    myMenuBar.add(menuAffichage);
 
-    setJMenuBar(myMenuBar);
+    super.setJMenuBar(myMenuBar);
   }
 
   /**
@@ -105,7 +113,7 @@ public class IGNFrame extends JInternalFrame implements ActionListener {
 
     // Carte IGN
     map = new IGNMap(center);
-    add(map);
+    super.add(map);
   }
 
   /**
@@ -119,7 +127,7 @@ public class IGNFrame extends JInternalFrame implements ActionListener {
 
     // Carte IGN
     map = new IGNMap(b);
-    add(map);
+    super.add(map);
   }
 
   /**
@@ -139,7 +147,7 @@ public class IGNFrame extends JInternalFrame implements ActionListener {
   @Override
   public void actionPerformed(ActionEvent e) {
     switch (e.getActionCommand()) {
-      case actionAddress:
+      case ACTION_ADDRESS:
       // +---------------------------------------+
         // | Centrer la carte autour d'une adresse |
         // +---------------------------------------+
@@ -187,10 +195,13 @@ public class IGNFrame extends JInternalFrame implements ActionListener {
           }
         }
         break;
-      case actionOrthoMap:
+      case ACTION_ORTHO_MAP:
         map.setOrthoMode(((JCheckBoxMenuItem) e.getSource()).isSelected());
         break;
-      case actionPrint:
+      case ACTION_ONE_KM:
+        map.setOneKmMode(((JCheckBoxMenuItem) e.getSource()).isSelected());
+        break;
+      case ACTION_PRINT:
         PrinterJob pj = PrinterJob.getPrinterJob();
         pj.setPrintable(getMap());
         if (pj.printDialog()) {

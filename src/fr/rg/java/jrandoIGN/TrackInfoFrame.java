@@ -69,17 +69,18 @@ public class TrackInfoFrame extends JInternalFrame
 	/**
 	 * Polices utilisées.
 	 */
-	private static final Font fontSmall = new Font("Dialog", Font.PLAIN, 9);
-	private static final Font fontNormal = new Font("Dialog", Font.PLAIN, 10);
+	private static final Font FONT_SMALL = new Font("Dialog", Font.PLAIN, 9);
+	private static final Font FONT_NORMAL = new Font("Dialog", Font.PLAIN, 10);
 
 	/**
 	 * Couleurs utilisées.
 	 */
-	private static final Color transparentBlue = new Color(0f, 0f, 1.0f, 0.5f),
-			transparentWhite = new Color(1f, 1f, 1.0f, 0.5f), transparentRed = new Color(1f, 0f, 0f, 0.5f),
-			speedColor = new Color(100, 100, 255), // Bleu clair
-			elevColor = new Color(255, 100, 100), // rouge clair,
-			intervColor = new Color(1, .1f, .2f, .5f);
+	private static final Color TRANSPARENT_BLUE = new Color(0f, 0f, 1.0f, 0.5f),
+			TRANSPARENT_WHITE = new Color(1f, 1f, 1.0f, 0.5f), 
+                        TRANSPARENT_RED = new Color(1f, 0f, 0f, 0.5f),
+			SPEED_COLOR = new Color(100, 100, 255), // Bleu clair
+			ELEV_COLOR = new Color(255, 100, 100), // rouge clair,
+			INTERV_COLOR = new Color(1, .1f, .2f, .5f);
 
 	// Liste des écouteurs de sélection de géolocalisation
 	private final List<WeakReference<GeoLocSelectionListener>> gListeners;
@@ -155,10 +156,10 @@ public class TrackInfoFrame extends JInternalFrame
 				true, // maximizable
 				true); // iconifiable
 		ResourceBundle resB = ResourceBundle.getBundle("i18n/strings", Locale.getDefault());
-		setTitle(resB.getString("pathinfoframe_name"));
-		setOpaque(true);
-		setBackground(Color.BLACK);
-		setSize(700, 500);
+		super.setTitle(resB.getString("pathinfoframe_name"));
+		super.setOpaque(true);
+		super.setBackground(Color.BLACK);
+		super.setSize(700, 500);
 
 		// Liste d'écouteurs de sélection de géolocalisation
 		gListeners = new ArrayList<>();
@@ -167,7 +168,7 @@ public class TrackInfoFrame extends JInternalFrame
 		// | Barre de menus |
 		// +----------------+
 		JMenuBar menuBar = new JMenuBar();
-		setJMenuBar(menuBar);
+		super.setJMenuBar(menuBar);
 
 		JMenu menuOptions = new JMenu(resB.getString("option_menu"));
 		menuBar.add(menuOptions);
@@ -184,54 +185,54 @@ public class TrackInfoFrame extends JInternalFrame
 		JPanel statPan = new JPanel(new GridLayout(1, 5));
 		statPan.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		statPan.setBackground(Color.BLACK);
-		add(statPan, BorderLayout.PAGE_START);
+		super.add(statPan, BorderLayout.PAGE_START);
 
 		String emptyTxt = resB.getString("empty_text");
 		TitledBorder bDist = BorderFactory.createTitledBorder(resB.getString("distance_title"));
-		bDist.setTitleFont(fontSmall);
+		bDist.setTitleFont(FONT_SMALL);
 		bDist.setTitleColor(Color.WHITE);
 		distanceLbl = new JLabel("<html>" + emptyTxt + "</html>");
-		distanceLbl.setFont(fontNormal);
+		distanceLbl.setFont(FONT_NORMAL);
 		distanceLbl.setHorizontalAlignment(SwingConstants.CENTER);
 		distanceLbl.setBorder(bDist);
 		distanceLbl.setForeground(Color.WHITE);
 		statPan.add(distanceLbl);
 
 		TitledBorder bElev = BorderFactory.createTitledBorder(resB.getString("elevation_title"));
-		bElev.setTitleFont(fontSmall);
+		bElev.setTitleFont(FONT_SMALL);
 		bElev.setTitleColor(Color.WHITE);
 		elevLbl = new JLabel("<html><i><small>" + emptyTxt + "<br>" + emptyTxt + "</small></i></html>");
-		elevLbl.setFont(fontNormal);
+		elevLbl.setFont(FONT_NORMAL);
 		elevLbl.setHorizontalAlignment(SwingConstants.CENTER);
 		elevLbl.setBorder(bElev);
 		elevLbl.setForeground(Color.WHITE);
 		statPan.add(elevLbl);
 
 		TitledBorder bDeniv = BorderFactory.createTitledBorder(resB.getString("slope_title"));
-		bDeniv.setTitleFont(fontSmall);
+		bDeniv.setTitleFont(FONT_SMALL);
 		bDeniv.setTitleColor(Color.WHITE);
 		denivLbl = new JLabel("<html><i><small>" + emptyTxt + "<br>" + emptyTxt + "</small></i></html>");
-		denivLbl.setFont(fontNormal);
+		denivLbl.setFont(FONT_NORMAL);
 		denivLbl.setBorder(bDeniv);
 		denivLbl.setForeground(Color.WHITE);
 		denivLbl.setHorizontalAlignment(SwingConstants.CENTER);
 		statPan.add(denivLbl);
 
 		TitledBorder bDuree = BorderFactory.createTitledBorder(resB.getString("duration_title"));
-		bDuree.setTitleFont(fontSmall);
+		bDuree.setTitleFont(FONT_SMALL);
 		bDuree.setTitleColor(Color.WHITE);
 		durationLbl = new JLabel("<html><i><small>" + emptyTxt + "<br>" + emptyTxt + "</small></i></html>");
-		durationLbl.setFont(fontNormal);
+		durationLbl.setFont(FONT_NORMAL);
 		durationLbl.setHorizontalAlignment(SwingConstants.CENTER);
 		durationLbl.setBorder(bDuree);
 		durationLbl.setForeground(Color.WHITE);
 		statPan.add(durationLbl);
 
 		TitledBorder bSpeed = BorderFactory.createTitledBorder(resB.getString("speed_title"));
-		bSpeed.setTitleFont(fontSmall);
+		bSpeed.setTitleFont(FONT_SMALL);
 		bSpeed.setTitleColor(Color.WHITE);
 		speedLbl = new JLabel("<html><i><small>" + emptyTxt + "<br>" + emptyTxt + "</small></i></html>");
-		speedLbl.setFont(fontNormal);
+		speedLbl.setFont(FONT_NORMAL);
 		speedLbl.setHorizontalAlignment(SwingConstants.CENTER);
 		speedLbl.setBorder(bSpeed);
 		speedLbl.setForeground(Color.WHITE);
@@ -241,7 +242,7 @@ public class TrackInfoFrame extends JInternalFrame
 		// | Graphe du parcours |
 		// +--------------------+
 		graph = new MixedGraph();
-		add(graph, BorderLayout.CENTER);
+		super.add(graph, BorderLayout.CENTER);
 		// Eventuelle trace KML
 		if (bundle != null) {
 			TrackInfoFrame.this.addTrack(bundle);
@@ -252,9 +253,9 @@ public class TrackInfoFrame extends JInternalFrame
 		// +----------------------+
 		progressBar = new JProgressBar(0, 100);
 		progressBar.setStringPainted(true);
-		progressBar.setFont(fontNormal);
+		progressBar.setFont(FONT_NORMAL);
 		progressBar.setAlignmentX(LEFT_ALIGNMENT);
-		add(progressBar, BorderLayout.PAGE_END);
+		super.add(progressBar, BorderLayout.PAGE_END);
 
 		addInternalFrameListener(TrackInfoFrame.this);
 	}
@@ -339,7 +340,7 @@ public class TrackInfoFrame extends JInternalFrame
 			} else { // Altitude du fichier KML
 				g.dispElevation = g.kmlElevation;
 			}
-			System.out.println("g.dispElevation=" + g.dispElevation);
+			//System.out.println("g.dispElevation=" + g.dispElevation);
 
 			if (lastLocation != null) {
 				// Lisser l'altitude
@@ -472,8 +473,8 @@ public class TrackInfoFrame extends JInternalFrame
 				} else { // Dénivelé négatif
 					denivCumulNeg += (lastLocation.dispElevation - g.dispElevation);
 				}
-				System.out.println(g.dispElevation + " -> " + lastLocation.dispElevation + ": " + "+" + denivCumulPos
-						+ ", -" + denivCumulNeg);
+				//System.out.println(g.dispElevation + " -> " + lastLocation.dispElevation + ": " + "+" + denivCumulPos
+				//		+ ", -" + denivCumulNeg);
 
 				// Distance cumulative
 				subpathCumulDist += KMLReader.computeDistance(g, lastLocation);
@@ -517,11 +518,11 @@ public class TrackInfoFrame extends JInternalFrame
 			durationLbl.setForeground(Color.WHITE);
 			speedLbl.setForeground(Color.WHITE);
 		} else { // Sous-parcours -> couleur rougeatre
-			distanceLbl.setForeground(intervColor);
-			elevLbl.setForeground(intervColor);
-			denivLbl.setForeground(intervColor);
-			durationLbl.setForeground(intervColor);
-			speedLbl.setForeground(intervColor);
+			distanceLbl.setForeground(INTERV_COLOR);
+			elevLbl.setForeground(INTERV_COLOR);
+			denivLbl.setForeground(INTERV_COLOR);
+			durationLbl.setForeground(INTERV_COLOR);
+			speedLbl.setForeground(INTERV_COLOR);
 		}
 		distanceLbl.setText("<html>" + dist2String(subpathCumulDist) + "</html>");
 		elevLbl.setText("<html><i><small>" + elev2HTML(subpathElevMin, subpathElevMax) + "</small></i></html>");
@@ -748,9 +749,9 @@ public class TrackInfoFrame extends JInternalFrame
 
 			// Récupérer la clé IGN
 			Preferences prefs = Preferences.userNodeForPackage(IGNMap.class);
-			String cleIGN = prefs.get(IGNMap.key_cleIGN, IGNMap.cleIGN_default);
+			String cleIGN = prefs.get(IGNMap.KEY_CLE_IGN, IGNMap.CLE_IGN_DEFAULT);
 
-			urlString = "http://gpp3-wxs.ign.fr/" + cleIGN + "/alti/rest/elevation.json?lat=" + latitude[0];
+			urlString = "https://gpp3-wxs.ign.fr/" + cleIGN + "/alti/rest/elevation.json?lat=" + latitude[0];
 			for (int j = 1; j < nbLoc; j++) {
 				urlString += "," + latitude[j];
 			}
@@ -1285,7 +1286,7 @@ public class TrackInfoFrame extends JInternalFrame
 			g2Legends = (Graphics2D) g2.create();
 			final float dash1[] = { 2f };
 			g2Legends.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 2f, dash1, 0.0f));
-			g2Legends.setFont(fontNormal);
+			g2Legends.setFont(FONT_NORMAL);
 			g2Legends.setPaint(Color.WHITE);
 			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
@@ -1350,7 +1351,7 @@ public class TrackInfoFrame extends JInternalFrame
 			pElev.lineTo(c.x, c.y);
 			pElev.closePath();
 			Graphics2D g2ElevFill = (Graphics2D) g2.create();
-			g2ElevFill.setPaint(new GradientPaint(0, (int) yElevMax, transparentWhite, 0, yMax, transparentRed));
+			g2ElevFill.setPaint(new GradientPaint(0, (int) yElevMax, TRANSPARENT_WHITE, 0, yMax, TRANSPARENT_RED));
 			g2ElevFill.fill(pElev);
 
 			// +-------------------+
@@ -1390,14 +1391,14 @@ public class TrackInfoFrame extends JInternalFrame
 			pSpeed.lineTo(c.x, c.y);
 			pSpeed.closePath();
 			Graphics2D g2SpeedFill = (Graphics2D) g2ElevFill.create();
-			g2SpeedFill.setPaint(new GradientPaint(0, 0, transparentBlue, 0, height, transparentWhite));
+			g2SpeedFill.setPaint(new GradientPaint(0, 0, TRANSPARENT_BLUE, 0, height, TRANSPARENT_WHITE));
 			pSpeed.moveTo(xMin, yMax);
 			g2SpeedFill.fill(pSpeed);
 
 			// +-------------------------+
 			// | Graduations en altitude |
 			// +-------------------------+
-			g2Legends.setPaint(elevColor);
+			g2Legends.setPaint(ELEV_COLOR);
 			int deniv = graphElevMax - graphElevMin;
 			int incr;
 			if (deniv < 1000) {
@@ -1421,7 +1422,7 @@ public class TrackInfoFrame extends JInternalFrame
 			// | Graduations en vitesse |
 			// +------------------------+
 			// Les graduations dépendent de la plage de vitesse
-			g2Legends.setColor(speedColor);
+			g2Legends.setColor(SPEED_COLOR);
 			float deltaV = graphSpeedMax - graphSpeedMin;
 			if (deltaV < 20) {
 				incr = 2; // si la plage est inférieure à 20 km/h => graduer
@@ -1510,7 +1511,7 @@ public class TrackInfoFrame extends JInternalFrame
 					elevDist2xy(cEnd, gEnd.length, gEnd.dispElevation);
 
 					Graphics2D g2interv = (Graphics2D) g2Legends.create();
-					g2interv.setPaint(intervColor);
+					g2interv.setPaint(INTERV_COLOR);
 					// Rectangle
 					if (cEnd.x > c.x) {
 						g2interv.fill(new Rectangle2D.Float(c.x, yMin, cEnd.x - c.x, yMax - yMin));

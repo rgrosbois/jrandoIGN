@@ -22,6 +22,8 @@ public class WMTS {
      * Distance couverte par une tuile (en mètres).
      *
      * @param zoom Niveau de zoom correspondant
+     * 
+     * @return distance en mètres
      */
     public static double getTileDim(int zoom) {
         return (2 * Math.PI * RAYON_TERRE / (1 << zoom));
