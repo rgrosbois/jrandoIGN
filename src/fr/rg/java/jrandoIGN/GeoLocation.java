@@ -14,6 +14,8 @@ import java.util.Locale;
  * bounding box.
  */
 public class GeoLocation {
+  public static final double RAYON_TERRE = 6_370_000; // 6'370 km
+
 
   private static final DateFormat df = new SimpleDateFormat("dd/MM/yyyy à HH:mm:ss", Locale.FRANCE);
   // latitude du lieu
@@ -88,6 +90,31 @@ public class GeoLocation {
     bb.latMax = latmax;
   }
 
+  /**
+   * Calculer la distance en mètre depuis une autre géolocalisation.
+   * 
+   * @param g
+   * @return 
+   */
+  public double computeDistance(GeoLocation g) {
+    double la = latitude;
+    double lb = g.latitude;
+    double da = longitude;
+    double db = g.longitude;
+    double ha = RAYON_TERRE + dispElevation;
+    double hb = RAYON_TERRE + g.dispElevation;
+    double dist = ha * ha + hb * hb - 2 * ha * hb * (
+            Math.cos(Math.toRadians(la)) * Math.cos(Math.toRadians(lb)) + 
+            Math.cos(Math.toRadians(da - db)) * Math.sin(Math.toRadians(la)) 
+                    * Math.sin(Math.toRadians(lb))
+            );
+    if (dist < 0) { // Cas où erreurs de calcul empêchent de trouver 0
+      return 0;
+    } else {
+      return Math.sqrt(dist);
+    }
+  }
+  
   @Override
   public String toString() {
     Date date = new Date();

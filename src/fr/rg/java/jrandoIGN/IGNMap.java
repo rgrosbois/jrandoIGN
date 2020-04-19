@@ -235,7 +235,7 @@ public class IGNMap extends JComponent implements Printable,
      */
     public IGNMap(HashMap<String, Object> b) {
         // Créer la carte centrée sur la 1ère géolocalisation
-        this(((ArrayList<GeoLocation>) b.get(KMLReader.LOCATIONS_KEY)).get(0));
+        this(((ArrayList<GeoLocation>) b.get(TrackReader.LOCATIONS_KEY)).get(0));
 
         // Ajouter la trace
         addTrack(b);
@@ -355,7 +355,7 @@ public class IGNMap extends JComponent implements Printable,
         }
 
         // Récupérer et conserver la liste des géolocalisations
-        kmlList = (ArrayList<GeoLocation>) b.get(KMLReader.LOCATIONS_KEY);
+        kmlList = (ArrayList<GeoLocation>) b.get(TrackReader.LOCATIONS_KEY);
         if (kmlList == null || kmlList.isEmpty()) {
             return;
         }

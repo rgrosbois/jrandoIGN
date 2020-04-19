@@ -45,11 +45,11 @@ public class DesktopFrame extends JFrame implements ActionListener,
   // Version
   private static final long serialVersionUID = 11;
   // Auteur
-  private static final String authorName = "R. Grosbois";
+  private static final String AUTHOR_NAME = "R. Grosbois";
   // Latitude par défaut (Echirolles)
-  private static final float DEFAULT_LATITUDE = 45.145f;
+  private static final float DEFAULT_LATITUDE = 45f;
   // Longitude par défaut (Echirolles)
-  private static final float DEFAULT_LONGITUDE = 5.72f;
+  private static final float DEFAULT_LONGITUDE = 0f;
   // Sauvegarde de la latitude
   private static final String SAVED_LATITUDE = "saved_latitude";
   // Sauvegarde de la longitude
@@ -61,7 +61,7 @@ public class DesktopFrame extends JFrame implements ActionListener,
   // Sauvegarde du numéro de port du proxy
   public static final String PROXY_PORT_NUMBER_KEY = "proxy_port_number";
   // Menus de l'IHM
-  private JMenuItem mItmOpen, mItmCloseKml, mItmSaveKml;
+  private JMenuItem mItmOpenKml, mItmOpenHiTrack, mItmCloseKml, mItmSaveKml;
   private JRadioButtonMenuItem mItmEditKml;
   private JMenuItem mItmAbout, mItmIGNKey;
   private JRadioButtonMenuItem mItmMapWin, mItmInfoWin;
@@ -69,7 +69,7 @@ public class DesktopFrame extends JFrame implements ActionListener,
   private JMenuItem mItmConfigProxy;
 
   // Conteneur pour les données de la trace
-  private HashMap<String, Object> kmlBundle;
+  private HashMap<String, Object> trackBundle;
 
   /**
    * Créer la fenêtre principale dans l'écran spécifié.
@@ -129,12 +129,19 @@ public class DesktopFrame extends JFrame implements ActionListener,
     // Menu
     JMenu trackMenu = new JMenu(resB.getString("path_menu"));
 
-    // Ouvrir une trace
-    mItmOpen = new JMenuItem(resB.getString("open_path_menu_itm"));
-    mItmOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+    // Ouvrir une trace KML
+    mItmOpenKml = new JMenuItem(resB.getString("open_kml_path_menu_itm"));
+    mItmOpenKml.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
       ActionEvent.ALT_MASK));
-    mItmOpen.addActionListener(DesktopFrame.this);
-    trackMenu.add(mItmOpen); // Item Ouvrir un fichier KML
+    mItmOpenKml.addActionListener(DesktopFrame.this);
+    trackMenu.add(mItmOpenKml); // Item Ouvrir un fichier KML
+    
+    // Ouvrir une trace HiTrack (Huawei)
+    mItmOpenHiTrack = new JMenuItem(resB.getString("open_hitrack_path_menu_itm"));
+    mItmOpenHiTrack.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H,
+      ActionEvent.ALT_MASK));
+    mItmOpenHiTrack.addActionListener(DesktopFrame.this);
+    trackMenu.add(mItmOpenHiTrack); // Item Ouvrir un fichier HiTrack
 
     // Editer la trace -> inactif tant qu'aucune trace n'est ouverte
     mItmEditKml = new JRadioButtonMenuItem(resB.getString("edit_path_menu_itm"));
@@ -370,9 +377,19 @@ public class DesktopFrame extends JFrame implements ActionListener,
     // le dernier répértoire utilisé
     Preferences prefs = Preferences.userNodeForPackage(this.getClass());
     JFileChooser chooser = new JFileChooser(prefs.get(LAST_USED_DIR_KEY, null));
+    
+    ResourceBundle resB = ResourceBundle.getBundle("i18n/strings",
+      Locale.getDefault());
+    chooser.setApproveButtonText(resB.getString("save_button_text"));
+
+    // Filtre 
     FileNameExtensionFilter filter = new FileNameExtensionFilter(
       "Fichier KML", "kml", "KML");
     chooser.setFileFilter(filter);
+    
+    // Préremplir le nom de fichier
+    File file = new File(trackBundle.get(TrackReader.PATHNAME_KEY).toString());
+    chooser.setSelectedFile(file);
 
     if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
       // Un fichier a été sélectionné
@@ -386,10 +403,10 @@ public class DesktopFrame extends JFrame implements ActionListener,
         Logger.getLogger(DesktopFrame.class.getName()).log(Level.SEVERE, null, ex);
       }
 
-      ArrayList<GeoLocation> list = (ArrayList<GeoLocation>) kmlBundle.get(KMLReader.LOCATIONS_KEY);
+      ArrayList<GeoLocation> list = (ArrayList<GeoLocation>) trackBundle.get(TrackReader.LOCATIONS_KEY);
       FileOutputStream fos = null;
       boolean useModel = false;
-      TrackInfoFrame tif = getTrackInfoFrame(kmlBundle, false);
+      TrackInfoFrame tif = getTrackInfoFrame(trackBundle, false);
       if (tif != null) {
         useModel = tif.isCorrectedElevationSelected();
       }
@@ -402,11 +419,39 @@ public class DesktopFrame extends JFrame implements ActionListener,
       }
 
       // Modifier le titre de l'application
-      ResourceBundle resB
-        = ResourceBundle.getBundle("i18n/strings", Locale.getDefault());
       setTitle(resB.getString("app_name") + " - " + choosenFile.getName()
-        + " (" + kmlBundle.get(KMLReader.NUMLOC_KEY) + ")");
+        + " (" + trackBundle.get(TrackReader.NUM_LOC_KEY) + ")");
     }
+  }
+  
+  /**
+   * Choisir puis ouvrir un fichier HiTrack contenant une trace
+   */
+  private void openHiTrack() {
+    // Sélecteur de fichiers affichage initialement le
+    // dernier répertoire utilisé
+    Preferences prefs = Preferences.userNodeForPackage(this.getClass());
+    JFileChooser chooser = new JFileChooser(prefs.get(LAST_USED_DIR_KEY, null));
+    
+    if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+      // Un fichier a été sélectionné
+      File choosenFile = chooser.getSelectedFile();
+      
+      // Enregistrer le répertoire courant
+      prefs.put(LAST_USED_DIR_KEY, choosenFile.getParent());
+      try {
+        prefs.flush();
+      } catch (BackingStoreException ex) {
+        Logger.getLogger(DesktopFrame.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      
+      // Extraire les géolocalisations
+      trackBundle
+        = (new TrackReader()).extractFromHiTrack(choosenFile.getAbsolutePath());
+      
+      handleTrackBundle();
+    }
+    
   }
 
   /**
@@ -416,9 +461,10 @@ public class DesktopFrame extends JFrame implements ActionListener,
     // Sélecteur de fichiers de type KML affichant initialement
     // le dernier répértoire utilisé
     Preferences prefs = Preferences.userNodeForPackage(this.getClass());
-    JFileChooser chooser = new JFileChooser(prefs.get(LAST_USED_DIR_KEY, null));
     FileNameExtensionFilter filter = new FileNameExtensionFilter(
       "Fichier KML", "kml", "KML");
+
+    JFileChooser chooser = new JFileChooser(prefs.get(LAST_USED_DIR_KEY, null));
     chooser.setFileFilter(filter);
 
     if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -434,36 +480,45 @@ public class DesktopFrame extends JFrame implements ActionListener,
       }
 
       // Extraire les géolocalisations
-      kmlBundle
-        = (new KMLReader()).extractLocWithStAXCursor(choosenFile.getAbsolutePath());
+      trackBundle
+        = (new TrackReader()).extractFromKML(choosenFile.getAbsolutePath());
 
-      // Modifier le titre de l'application
-      ResourceBundle resB
-        = ResourceBundle.getBundle("i18n/strings", Locale.getDefault());
-      setTitle(resB.getString("app_name") + " - " + choosenFile.getName()
-        + " (" + kmlBundle.get(KMLReader.NUMLOC_KEY) + ")");
-
-      ArrayList<GeoLocation> list
-        = (ArrayList<GeoLocation>) kmlBundle.get(KMLReader.LOCATIONS_KEY);
-      if (list != null && !list.isEmpty()) {
-        // Sauvegarder la position centrale
-        saveCenterLocation(list.get(0));
-
-        // Transférer les informations aux fenêtres internes (les créer si 
-        // nécessaire)
-        getTrackInfoFrame(kmlBundle, true);
-        IGNFrame igf = getIGNFrame(kmlBundle, true);
-
-        // Donner le focus à la fenêtre de carte
-        JDesktopPane desktopPane = (JDesktopPane) getContentPane();
-        desktopPane.setSelectedFrame(igf);
-
-        // Activer la manipulation de trace
-        enableTrackManipulation(true);
-      }
+      handleTrackBundle();
     }
   }
 
+  /**
+   * Extraire les informations du Bundle pour mettre à jour le titre de 
+   * l'application et afficher la trace sur la carte.
+   */
+  private void handleTrackBundle() {
+    // Modifier le titre de l'application
+    ResourceBundle resB
+            = ResourceBundle.getBundle("i18n/strings", Locale.getDefault());
+    setTitle(resB.getString("app_name") + " - "
+            + trackBundle.get(TrackReader.PATHNAME_KEY)
+            + " (" + trackBundle.get(TrackReader.NUM_LOC_KEY) + ")");
+    
+    ArrayList<GeoLocation> list
+            = (ArrayList<GeoLocation>) trackBundle.get(TrackReader.LOCATIONS_KEY);
+    if (list != null && !list.isEmpty()) {
+      // Sauvegarder la position centrale
+      saveCenterLocation(list.get(0));
+
+      // Transférer les informations aux fenêtres internes (les créer si 
+      // nécessaire)
+      getTrackInfoFrame(trackBundle, true);
+      IGNFrame igf = getIGNFrame(trackBundle, true);
+
+      // Donner le focus à la fenêtre de carte
+      JDesktopPane desktopPane = (JDesktopPane) getContentPane();
+      desktopPane.setSelectedFrame(igf);
+
+      // Activer la manipulation de trace
+      enableTrackManipulation(true);
+    }
+  }
+  
   /**
    * Enlever la trace KML actuellement affichée.
    */
@@ -479,7 +534,7 @@ public class DesktopFrame extends JFrame implements ActionListener,
     if (pif != null) {
       pif.clear();
     }
-    kmlBundle = null;
+    trackBundle = null;
 
     // Modifier le titre de l'application
     ResourceBundle resB = ResourceBundle.
@@ -596,7 +651,7 @@ public class DesktopFrame extends JFrame implements ActionListener,
     JOptionPane.showMessageDialog(DesktopFrame.this,
       resB.getString("app_name")
       + "\nVersion: " + serialVersionUID
-      + "\n" + authorName,
+      + "\n" + AUTHOR_NAME,
       resB.getString("about_menu_itm"),
       JOptionPane.INFORMATION_MESSAGE);
   }
@@ -626,13 +681,15 @@ public class DesktopFrame extends JFrame implements ActionListener,
   @Override
   public void actionPerformed(ActionEvent e) {
     Object src = e.getSource();
-    if (mItmOpen.equals(src)) {
+    if (mItmOpenKml.equals(src)) {
       openKmlFile();
+    } else if (mItmOpenHiTrack.equals(src)) {
+      openHiTrack();
     } else if (mItmCloseKml.equals(src)) {
       removeKmlPath();
     } else if (mItmEditKml.equals(src)) {
       // Warning si le mode de correction d'altitude n'est pas activé
-      TrackInfoFrame tif = getTrackInfoFrame(kmlBundle, false);
+      TrackInfoFrame tif = getTrackInfoFrame(trackBundle, false);
       if (mItmEditKml.isSelected()
         && (tif == null || !tif.isCorrectedElevationSelected())) {
         JOptionPane.showMessageDialog(DesktopFrame.this,
@@ -643,17 +700,17 @@ public class DesktopFrame extends JFrame implements ActionListener,
           JOptionPane.WARNING_MESSAGE);
       }
 
-      getIGNFrame(kmlBundle, true).getMap().setEditionMode(mItmEditKml.isSelected());
+      getIGNFrame(trackBundle, true).getMap().setEditionMode(mItmEditKml.isSelected());
     } else if (mItmSaveKml.equals(src)) {
       saveKmlFile();
     } else if (mItmMapWin.equals(src)) { // Sélectionner la fen. carte
       try {
-        getIGNFrame(kmlBundle, true).setSelected(true);
+        getIGNFrame(trackBundle, true).setSelected(true);
       } catch (PropertyVetoException ex) {
       }
     } else if (mItmInfoWin.equals(src)) { // Sélectionner la fen. statistiques
       try {
-        getTrackInfoFrame(kmlBundle, true).setSelected(true);
+        getTrackInfoFrame(trackBundle, true).setSelected(true);
       } catch (PropertyVetoException ex) {
       }
     } else if (mItmCasc.equals(src)) { // Cascader les fenêtres
@@ -720,7 +777,7 @@ public class DesktopFrame extends JFrame implements ActionListener,
    */
   @Override
   public void onTrackModified() {
-    TrackInfoFrame tif = getTrackInfoFrame(kmlBundle, false);
+    TrackInfoFrame tif = getTrackInfoFrame(trackBundle, false);
     if (tif != null) {
       tif.onTrackModified();
     }

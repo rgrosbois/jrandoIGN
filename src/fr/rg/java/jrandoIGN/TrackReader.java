@@ -1,5 +1,6 @@
 package fr.rg.java.jrandoIGN;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
@@ -7,9 +8,13 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.StringTokenizer;
@@ -18,100 +23,119 @@ import java.util.logging.Logger;
 import javax.xml.stream.events.XMLEvent;
 
 /**
- * Lecture d'un fichier KML contenant un trajet (LineString) et, la plupart du
- * temps, des positions (avec leurs dates).
- *
- * <p>
- * L'opération pouvant s'avérer longue, il est préférable de la mettre en oeuvre
- * dans le cadre d'un 'SwingWorker'.
- *
- * <p>
- * Format du fichier KML:
- * <pre>
- * Document
- * |--name
- * |--description
- * |--Style id="track_n" // trace normale
- * | |-- IconStyle
- * | | |-- Icon
- * | | | |-- href
- * |--Style id="track_h" // trace surlignée
- * | |-- IconStyle
- * | | |-- scale
- * | | |-- Icon
- * | | | |-- href
- * |--StyleMap id="track"
- * | |-- Pair
- * | | |-- key
- * | | |-- styleUrl
- * | |-- Pair
- * | | |-- key
- * | | |-- styleUrl
- * |--Style id="lineStyle"
- * | |-- LineStyle
- * | | |-- color
- * | | |-- width
- * ///////// Points individuels (1 placemark par point) //////
- * |--Folder
- * | |--name
- * | |--Placemark
- * | | |-- Timestamp
- * | | | |-- when
- * | | |-- StyleUrl
- * | | |-- Point
- * | | | |-- coordinates
- * | | |-- description
- * | |--Placemark
- * | | |-- Timestamp
- * | | | |-- when
- * | | |-- StyleUrl
- * | | |-- Point
- * | | | |-- coordinates
- * | | |-- description
- * . . . . . .
- * | |--Placemark
- * | | |-- Timestamp
- * | | | |-- when
- * | | |-- StyleUrl
- * | | |-- Point
- * | | | |-- coordinates
- * | | |-- description
- * /////////// Points de la trace //////////////
- * |-- Placemark
- * | |-- name
- * | |-- styleUrl
- * | |-- LineString
- * | | |-- tessellate
- * | | |-- altitudeMode
- * | | |-- coordinates
- * </pre>
+ * Méthodes pour extraires des géolocalisation d'une trace afin de créer et
+ * remplir une HashMap constituée de:
+ * <ul>
+ * <li>LOCATIONS_KEY: une liste (ArrayList) des géolocalisations.</li>
+ * <li>NUM_LOC_KEY: taille de la liste.</li>
+ * <li>CUMUL_DIST_KEY: distance totale parcourue</li>
+ * <li>PATHNAME_KEY: le nom de fichier KML associé (au format
+ * yyyyMMdd-hhmm-hitrack.kml)</li>
+ * <li>ALT_MIN_KEY: altitude minimale de la liste</li>
+ * <li>ALT_MAX_KEY: altitude maximale de la liste</li>
+ * <li>LAT_MIN_KEY: latitude minimale de la liste</li>
+ * <li>LAT_MAX_KEY: latitude maximale de la liste</li>
+ * <li>LONG_MIN_KEY: longitude minimale de la liste</li>
+ * <li>LONG_MAX_KEY: longitude maximale de la liste</li>
+ * <li>SPEED_MIN_KEY: vitesse minimale de la liste</li>
+ * <li>SPEED_MAX_KEY: vitesse maximale de la liste</li>
+ * <li></li>
+ * </ul>
  */
-public class KMLReader {
+public class TrackReader {
 
-  public static final double RAYON_TERRE = 6_370_000; // 6'370 km
-  // Tags du fichier KML
-  private static final String KML_PLACEMARK = "Placemark";
-  private static final String KML_WHEN = "when";
-  private static final String KML_POINT = "Point";
-  private static final String KML_COORDINATES = "coordinates";
-  private static final String KML_LINESTRING = "LineString";
-  // Pour interpréter les dates de positions
-  private static final DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
   // Clés d'enregistrement dans la HashMap
   public static final String ALT_MIN_KEY = "alt_min";
   public static final String ALT_MAX_KEY = "alt_max";
   public static final String PATHNAME_KEY = "title_key"; // Nom de fichier
   public static final String CUMUL_DIST_KEY = "cumul_dist_key"; // distance parcourue
-  public static final String LATMIN_KEY = "lat_min_key"; // Latitude minimale
-  public static final String LATMAX_KEY = "lat_max_key"; // Latitude maximale
-  public static final String LONGMIN_KEY = "long_min_key"; // Longitude minimale
-  public static final String LONGMAX_KEY = "long_max_key"; // Longitude maximale
+  public static final String LAT_MIN_KEY = "lat_min_key"; // Latitude minimale
+  public static final String LAT_MAX_KEY = "lat_max_key"; // Latitude maximale
+  public static final String LONG_MIN_KEY = "long_min_key"; // Longitude minimale
+  public static final String LONG_MAX_KEY = "long_max_key"; // Longitude maximale
   public static final String LOCATIONS_KEY = "loc_list_key"; // liste de positions
-  public static final String NUMLOC_KEY = "num_loc_key"; // nombre de positions
-  public static final String SPEEDMIN_KEY = "vitesse_min_key"; // vitesse minimale
-  public static final String SPEEDMAX_KEY = "vitesse_max_key"; // vitesse minimale
+  public static final String NUM_LOC_KEY = "num_loc_key"; // nombre de positions
+  public static final String SPEED_MIN_KEY = "vitesse_min_key"; // vitesse minimale
+  public static final String SPEED_MAX_KEY = "vitesse_max_key"; // vitesse minimale
 
+  // Tags de fichier KML
+  private static final String KML_PLACEMARK = "Placemark";
+  private static final String KML_WHEN = "when";
+  private static final String KML_POINT = "Point";
+  private static final String KML_COORDINATES = "coordinates";
+  private static final String KML_LINESTRING = "LineString";
+
+  // Pour interpréter les dates de positions
+  private static final DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
   /**
+   * Lecture d'un fichier KML contenant un trajet (LineString) et, la plupart du
+   * temps, des positions (avec leurs dates).
+   *
+   * <p>
+   * L'opération pouvant s'avérer longue, il est préférable de la mettre en
+   * oeuvre dans le cadre d'un 'SwingWorker'.
+   *
+   * <p>
+   * Format du fichier KML:
+   * <pre>
+   * Document
+   * |--name
+   * |--description
+   * |--Style id="track_n" // trace normale
+   * | |-- IconStyle
+   * | | |-- Icon
+   * | | | |-- href
+   * |--Style id="track_h" // trace surlignée
+   * | |-- IconStyle
+   * | | |-- scale
+   * | | |-- Icon
+   * | | | |-- href
+   * |--StyleMap id="track"
+   * | |-- Pair
+   * | | |-- key
+   * | | |-- styleUrl
+   * | |-- Pair
+   * | | |-- key
+   * | | |-- styleUrl
+   * |--Style id="lineStyle"
+   * | |-- LineStyle
+   * | | |-- color
+   * | | |-- width
+   * ///////// Points individuels (1 placemark par point) //////
+   * |--Folder
+   * | |--name
+   * | |--Placemark
+   * | | |-- Timestamp
+   * | | | |-- when
+   * | | |-- StyleUrl
+   * | | |-- Point
+   * | | | |-- coordinates
+   * | | |-- description
+   * | |--Placemark
+   * | | |-- Timestamp
+   * | | | |-- when
+   * | | |-- StyleUrl
+   * | | |-- Point
+   * | | | |-- coordinates
+   * | | |-- description
+   * . . . . . .
+   * | |--Placemark
+   * | | |-- Timestamp
+   * | | | |-- when
+   * | | |-- StyleUrl
+   * | | |-- Point
+   * | | | |-- coordinates
+   * | | |-- description
+   * /////////// Points de la trace //////////////
+   * |-- Placemark
+   * | |-- name
+   * | |-- styleUrl
+   * | |-- LineString
+   * | | |-- tessellate
+   * | | |-- altitudeMode
+   * | | |-- coordinates
+   * </pre>
+   * 
    * Cette méthode fait les hypothèses suivantes:
    * <ul>
    * <li>Les points de la trace apparaissent auparavant en tant que positions
@@ -142,7 +166,7 @@ public class KMLReader {
    * @param fileName
    * @return
    */
-  public HashMap<String, Object> extractLocWithStAXCursor(String fileName) {
+  public HashMap<String, Object> extractFromKML(String fileName) {
     HashMap<String, Object> bundle = new HashMap<>();
 
     ArrayList<GeoLocation> list = new ArrayList<>(); // Stockage du trajet
@@ -174,7 +198,7 @@ public class KMLReader {
 
     // Initialisation du Bundle vide
     bundle.put(PATHNAME_KEY, fileName); // Nom du fichier
-    bundle.put(NUMLOC_KEY, (int) -1); // Signaler une erreur
+    bundle.put(NUM_LOC_KEY, (int) -1); // Signaler une erreur
     bundle.put(CUMUL_DIST_KEY, 0); // Aucune géolocalisation récupérée
 
     try {
@@ -246,7 +270,7 @@ public class KMLReader {
                   g.timeStampS = date.getTime() / 1000; // en secondes
                 }
               } catch (ParseException ex) {
-                Logger.getLogger(KMLReader.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(TrackReader.class.getName()).log(Level.SEVERE, null, ex);
               }
 
               parseTime = false;
@@ -282,7 +306,7 @@ public class KMLReader {
                     GeoLocation lastLocation = list.get(list.size() - 1);
 
                     // Distance cumulative version perso
-                    cumulDist += computeDistance(g, lastLocation);
+                    cumulDist += g.computeDistance(lastLocation);
                     g.length = (int) cumulDist;
 
                     // Vitesse v=dx/dt
@@ -292,10 +316,6 @@ public class KMLReader {
                     } else { // cas où dt=0
                       g.speed = 0;
                     }
-//                    if (g.speed < 0) { // Ne devrait jamais arriver ?
-//                      System.out.println("****" + g.speed + ", comp:" + computeDistance(g, lastLocation));
-//                      g.speed = 0;
-//                    }
                     if (g.speed < vitMin) {
                       vitMin = g.speed;
                     }
@@ -321,6 +341,7 @@ public class KMLReader {
                     g.kmlElevation = Float.parseFloat(coord[2]);
                   }
                 }
+                // Mise à jour des statistiques
                 if (g.latitude < latMin) {
                   latMin = g.latitude;
                 }
@@ -388,41 +409,178 @@ public class KMLReader {
       bundle.put(CUMUL_DIST_KEY, (int) cumulDist); // Distance cumulative
       bundle.put(ALT_MAX_KEY, (int) altMax);
       bundle.put(ALT_MIN_KEY, (int) altMin);
-      bundle.put(LATMIN_KEY, latMin);
-      bundle.put(LATMAX_KEY, latMax);
-      bundle.put(LONGMIN_KEY, longMin);
-      bundle.put(LONGMAX_KEY, longMax);
-      bundle.put(SPEEDMIN_KEY, vitMin);
-      bundle.put(SPEEDMAX_KEY, vitMax);
-      bundle.put(NUMLOC_KEY, list.size()); // Nombre de positions
+      bundle.put(LAT_MIN_KEY, latMin);
+      bundle.put(LAT_MAX_KEY, latMax);
+      bundle.put(LONG_MIN_KEY, longMin);
+      bundle.put(LONG_MAX_KEY, longMax);
+      bundle.put(SPEED_MIN_KEY, vitMin);
+      bundle.put(SPEED_MAX_KEY, vitMax);
+      bundle.put(NUM_LOC_KEY, list.size()); // Nombre de positions
       bundle.put(LOCATIONS_KEY, list); // liste de positions
     }
 
-//    System.out.println("trace de " + list.size() + " positions");
-//    System.out.println(points.size() + " points non affectés");
     return bundle;
   }
 
-  private static double cos(double angledeg) {
-    return Math.cos(Math.toRadians(angledeg));
-  }
+  /**
+   * Extraire uniquement les géolocalisations (tp=lbs) d'un fichier HiTrack 
+   * de Huawei (testé avec la Huawei Mi Band 3)
+   * 
+   * À faire, extraire et utiliser les autres informations:
+   * <ul>
+   * <li>tp=p-m: pace-minutes</li>
+   * <li>tp=b-p-m: beat-per-minutes</li>
+   * <li>tp=h-r: heart-rate</li>
+   * <li>tp=s-r: stride-rate</li>
+   * <li>tp=rs: speed-per-second</li>
+   * <li>tp=alti: altitude</li>
+   * </ul>
+   *
+   * @param fileName
+   * @return
+   */
+  public HashMap<String, Object> extractFromHiTrack(String fileName) {
+    HashMap<String, Object> bundle = new HashMap<>();
 
-  private static double sin(double angledeg) {
-    return Math.sin(Math.toRadians(angledeg));
-  }
+    ArrayList<GeoLocation> list = new ArrayList<>(); // Stockage du trajet
+    HashMap<String, GeoLocation> points = new HashMap<>(); // Stockage des positions
+    String key = null; // Clé de stockage des positions
 
-  public static double computeDistance(GeoLocation g, GeoLocation lastLocation) {
-    double la = g.latitude;
-    double lb = lastLocation.latitude;
-    double da = g.longitude;
-    double db = lastLocation.longitude;
-    double ha = RAYON_TERRE + g.dispElevation;
-    double hb = RAYON_TERRE + lastLocation.dispElevation;
-    double dist = ha * ha + hb * hb - 2 * ha * hb * (cos(la) * cos(lb) + cos(da - db) * sin(la) * sin(lb));
-    if (dist < 0) { // Cas où erreurs de calcul empêchent de trouver 0
-      return 0;
-    } else {
-      return Math.sqrt(dist);
+    double longMin = 180;
+    double longMax = -180;
+    double latMin = 90;
+    double latMax = -90;
+    float altMin = 100000;
+    float altMax = 0;
+    float cumulDist = 0.0f;
+    float vitMin = 10000;
+    float vitMax = 0;
+
+    // Initialisation du Bundle vide
+    bundle.put(PATHNAME_KEY, fileName); // Nom du fichier
+    bundle.put(NUM_LOC_KEY, (int) -1); // Signaler une erreur
+    bundle.put(CUMUL_DIST_KEY, 0); // Aucune géolocalisation récupérée
+
+    System.out.println(fileName);
+
+    // Extraire l'horodatage contenu dans le nom de fichier
+    String[] info = fileName.split("_");
+    if (info.length == 2) {
+      // Instants de début et de fin
+      long start = Long.parseLong(info[1].substring(0, 13));
+      Instant instantStart = Instant.ofEpochSecond(start / 1000);
+      DateTimeFormatter fmtPath = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
+              .withZone(ZoneId.systemDefault());
+      bundle.put(PATHNAME_KEY, fmtPath.format(instantStart) + "-hitrack.kml"); // Nom de fichier KML
+
+//      long end = Long.parseLong(info[1].substring(13, 26));
+//      Instant instantEnd = Instant.ofEpochSecond(end / 1000);
+//      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+//              .withZone(ZoneId.systemDefault());
+//      System.out.println(formatter.format(instantStart) + " -> " + formatter.format(instantEnd));
+      
+      try {
+        BufferedReader in = new BufferedReader(new FileReader(fileName));
+
+        String ligne;
+        GeoLocation g;
+        int compteur = 0;
+        while( (ligne=in.readLine()) != null) { // Fin de fichier
+          String[] val = ligne.split(";");
+          
+          if (val[0].equals("tp=lbs")) { // Location per second
+            g = new GeoLocation();
+            int k = Integer.parseInt(val[1].split("=")[1]);
+            g.latitude = Double.parseDouble(val[2].split("=")[1]);
+            g.longitude = Double.parseDouble(val[3].split("=")[1]);
+            g.kmlElevation = Float.parseFloat(val[4].split("=")[1]);
+            g.timeStampS = (long) Double.parseDouble(val[5].split("=")[1]);
+            
+            // Supprimer les géolocalisations fausses
+            if (g.latitude==90) {
+              continue;
+            }
+            
+            // Ne conserver qu'une géolocalisation toutes les 20s ?
+            compteur++;
+            if (compteur==20) {
+              compteur=0;
+            } else {
+              continue;
+            }
+
+            // Calculs de la distance cumulative et de la vitesse instantanée
+            if (list.size() > 1) {
+              GeoLocation lastLocation = list.get(list.size() - 1);
+
+              // Distance cumulative version perso
+              cumulDist += g.computeDistance(lastLocation);
+              g.length = (int) cumulDist;
+
+              // Vitesse v=dx/dt
+              if (g.timeStampS - lastLocation.timeStampS > 0) {
+                g.speed = (g.length - lastLocation.length) * 3.6f
+                        / (g.timeStampS - lastLocation.timeStampS);
+              } else { // cas où dt=0
+                g.speed = 0;
+              }
+              if (g.speed < vitMin) {
+                vitMin = g.speed;
+              }
+              if (g.speed > vitMax) {
+                vitMax = g.speed;
+              }
+            } else {
+              g.length = 0;
+              g.speed = 0;
+            }
+
+            // Mise à jour des statistiques
+            if (g.latitude < latMin) {
+              latMin = g.latitude;
+            }
+            if (g.latitude > latMax) {
+              latMax = g.latitude;
+            }
+            if (g.longitude < longMin) {
+              longMin = g.longitude;
+            }
+            if (g.longitude > longMax) {
+              longMax = g.longitude;
+            }
+            if (g.kmlElevation < altMin) {
+              altMin = g.kmlElevation;
+            }
+            if (g.kmlElevation > altMax) {
+              altMax = g.kmlElevation;
+            }
+
+            list.add(g);
+          } else { // Format non-supporté
+            
+          }
+        }
+      } catch (IOException e) {
+        System.err.println("Erreur de lecture de fichier HiTrack");
+      }
     }
+
+    if (list.size() > 0) {
+      bundle.put(CUMUL_DIST_KEY, (int) cumulDist); // Distance cumulative
+      bundle.put(ALT_MAX_KEY, (int) altMax);
+      bundle.put(ALT_MIN_KEY, (int) altMin);
+      bundle.put(LAT_MIN_KEY, latMin);
+      bundle.put(LAT_MAX_KEY, latMax);
+      bundle.put(LONG_MIN_KEY, longMin);
+      bundle.put(LONG_MAX_KEY, longMax);
+      bundle.put(SPEED_MIN_KEY, vitMin);
+      bundle.put(SPEED_MAX_KEY, vitMax);
+      bundle.put(NUM_LOC_KEY, list.size()); // Nombre de positions
+      bundle.put(LOCATIONS_KEY, list); // liste de positions
+    }
+
+    return bundle;
   }
+
+  
 }
