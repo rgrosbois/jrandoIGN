@@ -1223,7 +1223,7 @@ public class IGNMap extends JComponent implements Printable,
                                 c = Integer.parseInt(tInfo[3].substring(1));
                             }
 
-                            url = new URL("https://gpp3-wxs.ign.fr/" + cleIGN + "/wmts/?"
+                            url = new URL("https://wxs.ign.fr/" + cleIGN + "/wmts/?"
                                     + "SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0"
                                     + (ortho ? "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS"
                                             : "&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS")

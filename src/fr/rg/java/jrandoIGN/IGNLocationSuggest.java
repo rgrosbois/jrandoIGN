@@ -178,7 +178,7 @@ public class IGNLocationSuggest extends PlainDocument {
             + "</XLS>\n";
     try {
       // Envoyer la requête
-      url = new URL("https://gpp3-wxs.ign.fr/" + cleIGN + "/geoportail/ols");
+      url = new URL("https://wxs.ign.fr/" + cleIGN + "/geoportail/ols");
       String proxyHostname = prefs.get(DesktopFrame.PROXY_HOSTNAME_KEY, "");
       if (!"".equalsIgnoreCase(proxyHostname)) { // utiliser un proxy
         int proxyPortNum = 

@@ -712,7 +712,7 @@ public class TrackInfoFrame extends JInternalFrame
       Preferences prefs = Preferences.userNodeForPackage(IGNMap.class);
       String cleIGN = prefs.get(IGNMap.KEY_CLE_IGN, IGNMap.CLE_IGN_DEFAULT);
 
-      urlString = "https://gpp3-wxs.ign.fr/" + cleIGN + "/alti/rest/elevation.json?lat=" + latitude[0];
+      urlString = "https://wxs.ign.fr/" + cleIGN + "/alti/rest/elevation.json?lat=" + latitude[0];
       for (int j = 1; j < nbLoc; j++) {
         urlString += "," + latitude[j];
       }
