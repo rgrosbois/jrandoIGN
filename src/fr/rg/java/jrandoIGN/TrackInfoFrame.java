@@ -256,7 +256,7 @@ public class TrackInfoFrame extends JInternalFrame
     progressBar.setAlignmentX(LEFT_ALIGNMENT);
     super.add(progressBar, BorderLayout.PAGE_END);
 
-    addInternalFrameListener(TrackInfoFrame.this);
+    super.addInternalFrameListener(TrackInfoFrame.this);
   }
 
   /**
@@ -283,6 +283,11 @@ public class TrackInfoFrame extends JInternalFrame
    * modification.
    */
   private void updateTrack() {
+    // Effacer la sélection
+    if (graph!=null) {
+      ((MixedGraph)graph).removeMouseSelection();
+    }
+    
     // Calcul de la durée totale
     if (locList != null && !locList.isEmpty()) {
       dureeTot = locList.get(locList.size() - 1).timeStampS - locList.get(0).timeStampS;
@@ -318,17 +323,11 @@ public class TrackInfoFrame extends JInternalFrame
     final float minDeltaAlt = 10; // Seuil de lissage d'altitude
     float cumulDist = 0;
 
-    // Vecteur pour le filtrage de la vitesse
-    // final int NVAL = 6;
-    // float v[] = new float[NVAL];
-    // for (int j = 0; j < NVAL; j++) {
-    // v[j] = loc.get(j).speed;
-    // }
     float pathSpeedMin = 1000;
     float pathSpeedMax = 0;
     int pathElevMin = 10_000;
     int pathElevMax = 0;
-
+    
     for (int i = 0; i < locList.size(); i++) {
       g = locList.get(i);
 
@@ -993,7 +992,7 @@ public class TrackInfoFrame extends JInternalFrame
      */
     public MixedGraph() {
       super();
-      setOpaque(true);
+      super.setOpaque(true);
 
       // Evênements souris
       enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
@@ -1039,7 +1038,7 @@ public class TrackInfoFrame extends JInternalFrame
      * La souris vient de sortir du graphe. Remettre la barre de progression
      * dans son état original et mettre à jour les drapeaux.
      */
-    private void removeMouseSelection() {
+    public void removeMouseSelection() {
       wasInsideGraph = false;
       firstGeoLocIdx = -1;
       secondGeoLocIdx = -1;

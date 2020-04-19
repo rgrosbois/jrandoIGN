@@ -96,7 +96,7 @@ public class GeoLocation {
    * @param g
    * @return 
    */
-  public double computeDistance(GeoLocation g) {
+  public double computeDistance(GeoLocation g) {    
     double la = latitude;
     double lb = g.latitude;
     double da = longitude;
@@ -104,8 +104,8 @@ public class GeoLocation {
     double ha = RAYON_TERRE + dispElevation;
     double hb = RAYON_TERRE + g.dispElevation;
     double dist = ha * ha + hb * hb - 2 * ha * hb * (
-            Math.cos(Math.toRadians(la)) * Math.cos(Math.toRadians(lb)) + 
-            Math.cos(Math.toRadians(da - db)) * Math.sin(Math.toRadians(la)) 
+            Math.cos(Math.toRadians(la)) * Math.cos(Math.toRadians(lb)) * 
+            Math.cos(Math.toRadians(da - db)) + Math.sin(Math.toRadians(la)) 
                     * Math.sin(Math.toRadians(lb))
             );
     if (dist < 0) { // Cas où erreurs de calcul empêchent de trouver 0

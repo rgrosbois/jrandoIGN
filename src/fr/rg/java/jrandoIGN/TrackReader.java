@@ -461,8 +461,6 @@ public class TrackReader {
     bundle.put(NUM_LOC_KEY, (int) -1); // Signaler une erreur
     bundle.put(CUMUL_DIST_KEY, 0); // Aucune géolocalisation récupérée
 
-    System.out.println(fileName);
-
     // Extraire l'horodatage contenu dans le nom de fichier
     String[] info = fileName.split("_");
     if (info.length == 2) {
