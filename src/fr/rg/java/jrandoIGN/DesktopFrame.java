@@ -729,9 +729,10 @@ public class DesktopFrame extends JFrame implements ActionListener,
   }
 
   /**
-   * Une géolocalisation a été sélectionnée dans la fenêtre de statistiques.
+   * Un intervalle de géolocalisations a été sélectionné dans la fenêtre de statistiques.
    *
-   * @param geoIdx
+   * @param geoIdx1
+   * @param geoIdx2
    */
   @Override
   public void onGeoLocIntervalSeleted(int geoIdx1, int geoIdx2) {
